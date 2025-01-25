@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+.container {
+  max-width: 1280px;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-avenir-light), system-ui, sans-serif;
+}
+
+.font-avenir-light {
+  font-family: var(--font-avenir-light), system-ui, sans-serif;
+}
+
+.font-avenir-heavy {
+  font-family: var(--font-avenir-heavy), system-ui, sans-serif;
+}
+
+.font-futura-light {
+  font-family: var(--font-futura-light), system-ui, sans-serif;
+}
+
+.font-futura-book {
+  font-family: var(--font-futura-book), system-ui, sans-serif;
+}
