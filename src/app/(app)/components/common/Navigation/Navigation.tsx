@@ -150,12 +150,6 @@ function Navigation() {
         <div
           className={`flex items-center ${data?.logo?.url ? 'justify-between' : 'justify-end'} h-16`}
         >
-          <Image
-            src={'https://order-lang.onrender.com/api/media/file/facebook-1.png'}
-            width={30}
-            height={30}
-            alt="test"
-          />
           {data?.logo?.url && (
             <Image
               src={`${SERVER_URL}${data?.logo?.url}`}
