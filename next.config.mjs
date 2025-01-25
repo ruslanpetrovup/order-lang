@@ -4,6 +4,7 @@ import { withPayload } from '@payloadcms/next/withPayload'
 const nextConfig = {
   images: {
     domains: ['localhost'],
+    output: 'standalone',
     remotePatterns: [
       {
         protocol: 'http',
