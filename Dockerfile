@@ -1,51 +1,53 @@
-FROM node:22.12.0-alpine AS base
-
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
+# Build stage
+FROM node:18-alpine AS builder
 WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED 1
 
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
-RUN \
-  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm i --legacy-peer-deps; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+# Create necessary directories
+RUN mkdir -p public src/payload/media
 
+# Copy package files
+COPY package.json package-lock.json ./
+COPY .npmrc ./
 
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Install dependencies
+RUN npm i --legacy-peer-deps
+
+# Copy source files
 COPY . .
 
+# Clean .next directory if exists
+RUN if [ -d ".next" ]; then rm -rf .next; fi
 
-RUN \
-  if [ -f yarn.lock ]; then yarn run build; \
-  elif [ -f package-lock.json ]; then npm run build; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+# Build application
+RUN npm run build
 
-FROM base AS runner
+# Production stage
+FROM node:18-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
+ENV PORT 3001
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Create necessary directories
+RUN mkdir -p public src/payload/media
 
+# Copy necessary files from builder
+COPY --from=builder /app/next.config.mjs ./
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/node_modules ./node_modules
 
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
-
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs && \
+    chown -R nextjs:nodejs .
 
 USER nextjs
 
-EXPOSE 3000
+EXPOSE 3001
 
-ENV PORT 3000
-
-CMD HOSTNAME="0.0.0.0" node server.js
+CMD ["npm", "start"]
